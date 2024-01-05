@@ -202,7 +202,7 @@ WHERE
 	OR contbr_occupation LIKE '%HOME%' OR contbr_occupation LIKE '%STUDENT%' OR contbr_occupation LIKE '%WIFE%'
 	OR contbr_occupation LIKE '%MOTHER%' OR contbr_occupation LIKE '%HOUSE KEEPING%')
 
---- Identify the occupation of those whose occupation is provided, but employer is not
+--- Identify the occupation of those whose occupation is provided, but whose employer is not
 
 SELECT 
 	DISTINCT(contbr_occupation)
@@ -212,7 +212,7 @@ WHERE
 	contbr_employer IS NULL AND 
 	contbr_occupation IS NOT NULL;
 
---- Now, null values in contbr_employer are replaces with 'NOT PROVIDED'
+--- Now, null values in contbr_employer are replaced with 'NOT PROVIDED'
 
 UPDATE 
 	fec
@@ -220,55 +220,4 @@ SET
 	contbr_employer = 'NOT PROVIDED'
 WHERE 
 	contbr_employer IS NULL;
-
-
-
---- Create a table grouping donations into two party groups based on occupation
-
-CREATE TABLE by_occupation AS
-SELECT
-    contbr_occupation AS Occupation,
-    ROUND(SUM(CASE WHEN party = 'Democrat' THEN contb_receipt_amt ELSE 0 END)::numeric, 2) AS Democrat,
-    ROUND(SUM(CASE WHEN party = 'Republican' THEN contb_receipt_amt ELSE 0 END)::numeric, 2) AS Republican
-FROM
-    fec
-GROUP BY
-    contbr_occupation;
-	
-
---- Display occupations donating more than one million to either of two parties
-SELECT 
-	occupation,
-	TO_CHAR(democrat, '9,999,999,999.99'),
-	TO_CHAR(republican, '9,999,999,999.99')
-FROM
-	by_occupation
-WHERE 
-	Democrat > 1000000 AND
-	Republican > 1000000
-ORDER BY 
-	occupation;
-
---- Create a table grouping donations into two condidate groups (Obama, Romney, since they came to final stage) based on occupation
-
-CREATE TABLE by_occupation_final AS
-SELECT
-    contbr_occupation AS Occupation,
-    ROUND(SUM(CASE WHEN cand_nm = 'Romney, Mitt' THEN contb_receipt_amt ELSE 0 END)::numeric, 2) AS Romney,
-    ROUND(SUM(CASE WHEN cand_nm = 'Obama, Barack' THEN contb_receipt_amt ELSE 0 END)::numeric, 2) AS Obama
-FROM
-    fec
-GROUP BY
-    contbr_occupation;
-
-
-SELECT 
-	*
-FROM
-	by_occupation_final
-WHERE 
-	romney > 1000000 AND
-	obama > 1000000
-ORDER
-	BY romney DESC, obama DESC
 
